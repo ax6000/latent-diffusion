@@ -1,0 +1,7 @@
+*.pth
+.venv38/
+*.ckpt
+__pychache__
+logs/
+*.pyc
+predictions/

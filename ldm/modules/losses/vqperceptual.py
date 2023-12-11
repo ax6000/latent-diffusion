@@ -2,9 +2,8 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from einops import repeat
-
-from taming.modules.discriminator.model import NLayerDiscriminator, weights_init
-from taming.modules.losses.lpips import LPIPS
+from taming.modules.discriminator.model import NLayerDiscriminator1D, weights_init
+from taming.modules.losses.lpips_1D import LPIPS
 from taming.modules.losses.vqperceptual import hinge_d_loss, vanilla_d_loss
 
 
@@ -64,7 +63,7 @@ class VQLPIPSWithDiscriminator(nn.Module):
         else:
             self.pixel_loss = l2
 
-        self.discriminator = NLayerDiscriminator(input_nc=disc_in_channels,
+        self.discriminator = NLayerDiscriminator1D(input_nc=disc_in_channels,
                                                  n_layers=disc_num_layers,
                                                  use_actnorm=use_actnorm,
                                                  ndf=disc_ndf
@@ -97,7 +96,7 @@ class VQLPIPSWithDiscriminator(nn.Module):
 
     def forward(self, codebook_loss, inputs, reconstructions, optimizer_idx,
                 global_step, last_layer=None, cond=None, split="train", predicted_indices=None):
-        if not exists(codebook_loss):
+        if codebook_loss is None:
             codebook_loss = torch.tensor([0.]).to(inputs.device)
         #rec_loss = torch.abs(inputs.contiguous() - reconstructions.contiguous())
         rec_loss = self.pixel_loss(inputs.contiguous(), reconstructions.contiguous())
@@ -141,11 +140,12 @@ class VQLPIPSWithDiscriminator(nn.Module):
                    "{}/g_loss".format(split): g_loss.detach().mean(),
                    }
             if predicted_indices is not None:
-                assert self.n_classes is not None
-                with torch.no_grad():
-                    perplexity, cluster_usage = measure_perplexity(predicted_indices, self.n_classes)
-                log[f"{split}/perplexity"] = perplexity
-                log[f"{split}/cluster_usage"] = cluster_usage
+                pass
+                # assert self.n_classes is not None
+                # with torch.no_grad():
+                #     perplexity, cluster_usage = measure_perplexity(predicted_indices, self.n_classes)
+                # log[f"{split}/perplexity"] = perplexity
+                # log[f"{split}/cluster_usage"] = cluster_usage
             return loss, log
 
         if optimizer_idx == 1:
