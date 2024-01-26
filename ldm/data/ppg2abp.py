@@ -57,7 +57,7 @@ class PPG2ABPDataset_v3_base(Dataset):
             arr = np.load(self.data_root+"\\"+str(f))
             if len(arr) != 0:
                 data.append(arr)
-        data = np.concatenate(data,dtype=np.float16)
+        data = np.concatenate(data)
         return data
     
     def __getitem__(self, index):
@@ -82,6 +82,6 @@ class PPG2ABPDataset_v3_Test(PPG2ABPDataset_v3_base):
     def __init__(self, data_len=-1, size=224, loader=None):
         super().__init__(data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\test_BP.txt")         
     
-class PPG2ABPDataset_v3_Predict(PPG2ABPDataset_v3_base):
-    def __init__(self, data_len=-1,size=224, loader=None):
-        super().__init__(data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\predict_BP.txt")
+# class PPG2ABPDataset_v3_Predict(PPG2ABPDataset_v3_base):
+#     def __init__(self, data_len=-1,size=224, loader=None):
+#         super().__init__(data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\predict_BP.txt")

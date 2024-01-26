@@ -1,0 +1,5 @@
+lightning:
+  trainer:
+    accelerator: gpu
+    gpus: 0,
+    resume_from_checkpoint: models/first_stage_models/vq-f4/ppg.ckpt

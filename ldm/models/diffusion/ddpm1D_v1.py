@@ -5,7 +5,8 @@ https://github.com/openai/improved-diffusion/blob/e94489283bb876ac1477d5dd7709bb
 https://github.com/CompVis/taming-transformers
 -- merci
 """
-
+import os
+import datetime
 import torch
 import torch.nn as nn
 import numpy as np
@@ -184,6 +185,7 @@ class DDPM(pl.LightningModule):
                     print(f"{context}: Restored training weights")
 
     def init_from_ckpt(self, path, ignore_keys=list(), only_model=False):
+        print("##############",type(self),type(self.model))
         sd = torch.load(path, map_location="cpu")
         if "state_dict" in list(sd.keys()):
             sd = sd["state_dict"]
@@ -268,7 +270,7 @@ class DDPM(pl.LightningModule):
     def sample(self, batch_size=16, return_intermediates=False):
         image_size = self.image_size
         channels = self.channels
-        return self.p_sample_loop((batch_size, channels, image_size, image_size),
+        return self.p_sample_loop((batch_size, channels, image_size),
                                   return_intermediates=return_intermediates)
 
     def q_sample(self, x_start, t, noise=None):
@@ -362,6 +364,26 @@ class DDPM(pl.LightningModule):
             loss_dict_ema = {key + '_ema': loss_dict_ema[key] for key in loss_dict_ema}
         self.log_dict(loss_dict_no_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True)
         self.log_dict(loss_dict_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True)
+    
+    @torch.no_grad()
+    def test_step(self, batch, batch_idx):
+        x, c,xx,xc = self.get_input(batch, self.first_stage_key,return_original_cond=True,return_original_input=True)
+        print(x.shape,c.shape,xx.shape,xc.shape)
+        _, loss_dict_no_ema = self(x, c)
+        with self.ema_scope():
+            _, loss_dict_ema = self(x, c)
+            loss_dict_ema = {key + '_ema': loss_dict_ema[key] for key in loss_dict_ema}
+            out = self.sample_log(c, c.shape[0],True, ddim_steps=200)[0]
+            out = self.decode_first_stage(out)
+        self.log_dict(loss_dict_no_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True)
+        self.log_dict(loss_dict_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True)
+        path = os.path.join("predictions",datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
+        os.makedirs(path,exist_ok=True)
+        o = {'GT':xx.detach().cpu(),'Cond':xc.detach().cpu(),'Out':out.detach().cpu()}
+        for k in o.keys():
+            np.save(os.path.join(path,f"{k}-{o[k].shape[0]*1}.npy"),o[k])
+        # return {'GT':x.detach().cpu(),'Cond':c.detach().cpu(),'Out':images.detach().cpu()}
+    # def test_epoch_end(self, outputs):
 
     def on_train_batch_end(self, *args, **kwargs):
         if self.use_ema:
@@ -661,7 +683,7 @@ class LatentDiffusion(DDPM):
 
     @torch.no_grad()
     def get_input(self, batch, k, return_first_stage_outputs=False, force_c_encode=False,
-                  cond_key=None, return_original_cond=False, bs=None):
+                  cond_key=None, return_original_cond=False, bs=None,return_original_input=False):
         x = super().get_input(batch, k)
         if bs is not None:
             x = x[:bs]
@@ -708,13 +730,15 @@ class LatentDiffusion(DDPM):
             xrec = self.decode_first_stage(z)
             out.extend([x, xrec])
         if return_original_cond:
+            out.append(x)
+        if return_original_cond:
             out.append(xc)
         return out
 
     @torch.no_grad()
     def decode_first_stage(self, z, predict_cids=False, force_not_quantize=False):
         if predict_cids:
-            if z.dim() == 4:
+            if z.dim() == 3:
                 z = torch.argmax(z.exp(), dim=1).long()
             z = self.first_stage_model.quantize.get_codebook_entry(z, shape=None)
             z = rearrange(z, 'b h c -> b c h').contiguous()
@@ -774,7 +798,7 @@ class LatentDiffusion(DDPM):
     # same as above but without decorator
     def differentiable_decode_first_stage(self, z, predict_cids=False, force_not_quantize=False):
         if predict_cids:
-            if z.dim() == 4:
+            if z.dim() == 3:
                 z = torch.argmax(z.exp(), dim=1).long()
             z = self.first_stage_model.quantize.get_codebook_entry(z, shape=None)
             z = rearrange(z, 'b h c -> b c h').contiguous()
@@ -898,7 +922,6 @@ class LatentDiffusion(DDPM):
         return [rescale_bbox(b) for b in bboxes]
 
     def apply_model(self, x_noisy, t, cond, return_ids=False):
-
         if isinstance(cond, dict):
             # hybrid case, cond is exptected to be a dict
             pass
@@ -907,7 +930,6 @@ class LatentDiffusion(DDPM):
                 cond = [cond]
             key = 'c_concat' if self.model.conditioning_key == 'concat' else 'c_crossattn'
             cond = {key: cond}
-
         if hasattr(self, "split_input_params"):
             assert len(cond) == 1  # todo can only deal with one conditioning atm
             assert not return_ids  
@@ -915,7 +937,6 @@ class LatentDiffusion(DDPM):
             stride = self.split_input_params["stride"]  # eg. (64, 64)
 
             h, w = x_noisy.shape[-2:]
-
             fold, unfold, normalization, weighting = self.get_fold_unfold(x_noisy, ks, stride)
 
             z = unfold(x_noisy)  # (bn, nc * prod(**ks), L)
@@ -933,7 +954,7 @@ class LatentDiffusion(DDPM):
                 c = unfold(c)
                 c = c.view((c.shape[0], -1, ks[0], c.shape[-1]))  # (bn, nc, ks[0], ks[1], L )
 
-                cond_list = [{c_key: [c[:, :, :, i]]} for i in range(c.shape[-1])]
+                cond_list = [{c_key: [c[:, :, i]]} for i in range(c.shape[-1])]
 
             elif self.cond_stage_key == 'coordinates_bbox':
                 assert 'original_image_size' in self.split_input_params, 'BoudingBoxRescaling is missing original_image_size'
@@ -964,7 +985,7 @@ class LatentDiffusion(DDPM):
                 print(patch_limits_tknzd[0].shape)
                 # cut tknzd crop position from conditioning
                 assert isinstance(cond, dict), 'cond must be dict to be fed into model'
-                cut_cond = cond['c_crossattn'][0][..., :-2].to(self.device)
+                cut_cond = cond['c_crossattn'][0][..., :-1].to(self.device)
                 print(cut_cond.shape)
 
                 adapted_cond = torch.stack([torch.cat([cut_cond, p], dim=1) for p in patch_limits_tknzd])
@@ -1246,8 +1267,7 @@ class LatentDiffusion(DDPM):
 
         if ddim:
             ddim_sampler = DDIMSampler(self)
-            shape = (self.channels, self.image_size)
-            # print("#### shape ",shape,"####")
+            shape = (self.channels, self.image_size//4)
             samples, intermediates =ddim_sampler.sample(ddim_steps,batch_size,
                                                         shape,cond,verbose=False,**kwargs)
 
@@ -1276,8 +1296,8 @@ class LatentDiffusion(DDPM):
         log["inputs"] = x
         log["reconstruction"] = xrec
         if self.model.conditioning_key is not None:
-            if hasattr(self.cond_stage_model, "decode"):
-                xc = self.cond_stage_model.decode(c)
+            if hasattr(self.cond_stage_model, "encode"):
+                xc = self.cond_stage_model.encode(c)
                 log["conditioning"] = xc
             elif self.cond_stage_key in ["caption"]:
                 xc = log_txt_as_img((x.shape[2], x.shape[3]), batch["caption"])
@@ -1411,6 +1431,7 @@ class DiffusionWrapper(pl.LightningModule):
         assert self.conditioning_key in [None, 'concat', 'crossattn', 'hybrid', 'adm']
 
     def forward(self, x, t, c_concat: list = None, c_crossattn: list = None):
+        # print(self.conditioning_key,c_crossattn[0].shape)
         if self.conditioning_key is None:
             out = self.diffusion_model(x, t)
         elif self.conditioning_key == 'concat':
@@ -1418,6 +1439,7 @@ class DiffusionWrapper(pl.LightningModule):
             out = self.diffusion_model(xc, t)
         elif self.conditioning_key == 'crossattn':
             cc = torch.cat(c_crossattn, 1)
+            # print(cc.shape)
             out = self.diffusion_model(x, t, context=cc)
         elif self.conditioning_key == 'hybrid':
             xc = torch.cat([x] + c_concat, dim=1)
