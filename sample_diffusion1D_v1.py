@@ -165,7 +165,7 @@ def run(model, logdir, batch_size=50, vanilla=False, custom_steps=None, eta=None
             
             all_images.extend([custom_to_np(logs["sample"])])
             all_gt_images.extend([data['gt_image']])
-            n_saved = save_logs(logs, logdir, n_saved=n_saved, key="sample",np_path=nplog)
+            n_saved = save_logs(logs,data['gt_image'], logdir, n_saved=n_saved, key="sample",np_path=nplog)
             if n_saved >= n_samples:
                 print(f'Finish after generating {n_saved} samples')
                 break
@@ -183,7 +183,7 @@ def run(model, logdir, batch_size=50, vanilla=False, custom_steps=None, eta=None
     print(f"sampling of {n_saved} images finished in {(time.time() - tstart) / 60.:.2f} minutes.")
 
 
-def save_logs(logs, path, n_saved=0, key="sample", np_path=None):
+def save_logs(logs,gt, path, n_saved=0, key="sample", np_path=None):
     for k in logs:
         if k == key:
             batch = logs[key]
@@ -197,7 +197,7 @@ def save_logs(logs, path, n_saved=0, key="sample", np_path=None):
                 npbatch = custom_to_np(batch)
                 shape_str = "x".join([str(x) for x in npbatch.shape])
                 nppath = os.path.join(np_path, f"{n_saved}-{shape_str}-samples.npz")
-                np.savez(nppath, npbatch)
+                np.savez(nppath, npbatch,gt)
                 n_saved += npbatch.shape[0]
     return n_saved
 
@@ -262,7 +262,7 @@ def get_parser():
 
 def load_model_from_config(config, sd):
     model = instantiate_from_config(config)
-    # model.load_state_dict(sd,strict=False)
+    model.load_state_dict(sd,strict=False)
     model.cuda()
     model.eval()
     return model
@@ -309,7 +309,7 @@ if __name__ == "__main__":
         logdir = opt.resume.rstrip("\\")
         ckpt = os.path.join(logdir, "model.ckpt")
     base_configs = sorted(glob.glob(os.path.join(logdir, "config.yaml")))
-    # print("config",base_configs)
+    print("config",base_configs)
     opt.base = base_configs
 
     configs = [OmegaConf.load(cfg) for cfg in opt.base]

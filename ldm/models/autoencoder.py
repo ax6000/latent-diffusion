@@ -323,8 +323,11 @@ class AutoencoderKL(pl.LightningModule):
 
     def encode(self, x):
         h = self.encoder(x)
-        moments = self.quant_conv(h)
+        moments = self.quant_conv(h) # torch.nn.Conv2d
         posterior = DiagonalGaussianDistribution(moments)
+        # in  DiagonalGaussianDistribution:
+        # self.mean, self.logvar = 
+        # torch.chunk(parameters, 2, dim=1)
         return posterior
 
     def decode(self, z):

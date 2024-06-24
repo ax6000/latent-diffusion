@@ -34,6 +34,7 @@ class DiagonalGaussianDistribution(object):
 
     def sample(self):
         x = self.mean + self.std * torch.randn(self.mean.shape).to(device=self.parameters.device)
+        # print(x.shape)
         return x
 
     def kl(self, other=None):

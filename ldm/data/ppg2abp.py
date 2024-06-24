@@ -34,7 +34,7 @@ def make_dataset(dir):
 
 class PPG2ABPDataset_v3_base(Dataset):
     def __init__(self,data_flist,data_root = r"F:\minowa\BloodPressureEstimation\data\processed\BP_npy\1121\p00",
-                 data_len=-1, size=224, loader=None):
+                 data_len=1000, size=224, loader=None):
         self.data_root = data_root
         self.data_flist = data_flist
         self.flist = make_dataset(self.data_flist)
@@ -82,6 +82,6 @@ class PPG2ABPDataset_v3_Test(PPG2ABPDataset_v3_base):
     def __init__(self, data_len=-1, size=224, loader=None):
         super().__init__(data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\test_BP.txt")         
     
-# class PPG2ABPDataset_v3_Predict(PPG2ABPDataset_v3_base):
-#     def __init__(self, data_len=-1,size=224, loader=None):
-#         super().__init__(data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\predict_BP.txt")
+class PPG2ABPDataset_v3_Predict(PPG2ABPDataset_v3_base):
+    def __init__(self, data_len=-1,size=224, loader=None):
+        super().__init__(data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\predict_BP.txt")
