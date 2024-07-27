@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from taming.modules.vqvae.quantize import VectorQuantizer1D as VectorQuantizer
 from packaging import version
 from ldm.modules.diffusionmodules.model1D_v1 import Encoder, Decoder
-from ldm.modules.distributions.distributions import DiagonalGaussianDistribution
+from ldm.modules.distributions.distributions import DiagonalGaussianDistribution1D as DiagonalGaussianDistribution
 
 from ldm.util import instantiate_from_config
 
@@ -343,9 +343,10 @@ class AutoencoderKL(pl.LightningModule):
 
     def get_input(self, batch, k):
         x = batch[k]
-        if len(x.shape) == 3:
+        if len(x.shape) == 2:
             x = x[..., None]
-        x = x.permute(0, 2, 1).to(memory_format=torch.contiguous_format).float()
+        # x = x.permute(0, 2, 1).to(memory_format=torch.contiguous_format).float()
+        x = x.to(memory_format=torch.contiguous_format).float()
         return x
 
     def training_step(self, batch, batch_idx, optimizer_idx):
@@ -409,8 +410,8 @@ class AutoencoderKL(pl.LightningModule):
                 assert xrec.shape[1] > 3
                 x = self.to_rgb(x)
                 xrec = self.to_rgb(xrec)
-            log["samples"] = self.decode(torch.randn_like(posterior.sample()))
-            log["reconstructions"] = xrec
+            log["samples"] = torch.stack([x,self.decode(torch.randn_like(posterior.sample()))],dim=-1)
+            log["reconstructions"] = torch.stack([x,xrec],dim=-1)
         log["inputs"] = x
         return log
 

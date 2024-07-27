@@ -33,7 +33,7 @@ def make_dataset(dir):
     return images
 
 class PPG2ABPDataset_v3_base(Dataset):
-    def __init__(self,data_flist,data_root = r"F:\minowa\BloodPressureEstimation\data\processed\BP_npy\1121\p00",
+    def __init__(self,data_flist,data_root = r"F:\minowa\BloodPressureEstimation\data\processed\BP_npy\0325_256_corr_clean\p00",
                  data_len=1000, size=224, loader=None):
         self.data_root = data_root
         self.data_flist = data_flist
@@ -72,16 +72,16 @@ class PPG2ABPDataset_v3_base(Dataset):
     
 class PPG2ABPDataset_v3_Train(PPG2ABPDataset_v3_base):
     def __init__(self, data_len=-1, size=224, loader=None):
-        super().__init__(data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\train_BP.txt")
+        super().__init__(data_len=data_len,data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\train_BP2.txt")
 
 class PPG2ABPDataset_v3_Val(PPG2ABPDataset_v3_base):
-    def __init__(self, data_len=-1, size=224, loader=None):
-        super().__init__(data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\val_BP.txt")
+    def __init__(self, data_len=1000, size=224, loader=None):
+        super().__init__(data_len=data_len,data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\val_BP2.txt")
 
 class PPG2ABPDataset_v3_Test(PPG2ABPDataset_v3_base):
-    def __init__(self, data_len=-1, size=224, loader=None):
-        super().__init__(data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\test_BP.txt")         
+    def __init__(self, data_len=5000, size=224, loader=None):
+        super().__init__(data_len=data_len,data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\test_BP2.txt")         
     
 class PPG2ABPDataset_v3_Predict(PPG2ABPDataset_v3_base):
     def __init__(self, data_len=-1,size=224, loader=None):
-        super().__init__(data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\predict_BP.txt")
+        super().__init__(data_flist = r"F:\minowa\BloodPressureEstimation\data\processed\list\predict_BP2.txt")

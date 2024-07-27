@@ -21,7 +21,7 @@ from pytorch_lightning.utilities.distributed import rank_zero_only
 
 from ldm.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
 from ldm.modules.ema import LitEma
-from ldm.modules.distributions.distributions import normal_kl, DiagonalGaussianDistribution
+from ldm.modules.distributions.distributions import normal_kl, DiagonalGaussianDistribution,DiagonalGaussianDistribution1D
 from ldm.models.autoencoder import VQModelInterface, IdentityFirstStage, AutoencoderKL
 from ldm.modules.diffusionmodules.util import make_beta_schedule, extract_into_tensor, noise_like
 from ldm.models.diffusion.ddim1D_v1 import DDIMSampler
@@ -562,7 +562,7 @@ class LatentDiffusion(DDPM):
         return denoise_grid
 
     def get_first_stage_encoding(self, encoder_posterior):
-        if isinstance(encoder_posterior, DiagonalGaussianDistribution):
+        if isinstance(encoder_posterior, (DiagonalGaussianDistribution,DiagonalGaussianDistribution1D)):
             z = encoder_posterior.sample()
         elif isinstance(encoder_posterior, torch.Tensor):
             z = encoder_posterior
@@ -580,7 +580,7 @@ class LatentDiffusion(DDPM):
         if self.cond_stage_forward is None:
             if hasattr(self.cond_stage_model, 'encode') and callable(self.cond_stage_model.encode):
                 c = self.cond_stage_model.encode(c)
-                if isinstance(c, DiagonalGaussianDistribution):
+                if isinstance(c, (DiagonalGaussianDistribution,DiagonalGaussianDistribution1D)):
                     c = c.mode()
                 elif isinstance(c, tuple):
                     c = c[0]
@@ -894,7 +894,7 @@ class LatentDiffusion(DDPM):
             else:
                 return self.first_stage_model.encode(x)
         else:
-            return self.first_stage_model.encode_to_prequant(x)
+            return self.first_stage_model.encode(x)
 
     def shared_step(self, batch, **kwargs):
         x, c = self.get_input(batch, self.first_stage_key)

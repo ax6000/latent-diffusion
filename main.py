@@ -332,6 +332,7 @@ class FigLogger(Callback):
             
             
     def make_figures(self,images,nrow=4):
+        # print("FigLogger.make_figures",images.shape)
         ncol = len(images)//nrow+1 if len(images)%nrow else len(images)//nrow
         # print(ncol,nrow,images[0].shape,len(images))
         fig,axes = plt.subplots(nrow,ncol)
@@ -343,13 +344,13 @@ class FigLogger(Callback):
     
     def log_img(self, pl_module, batch, batch_idx, split="train"):
         check_idx = batch_idx if self.log_on_batch_idx else pl_module.global_step
-        if (self.check_frequency(check_idx) and  # batch_idx % self.batch_freq == 0
+        is_train = pl_module.training
+        if (self.check_frequency(check_idx,is_train) and  # batch_idx % self.batch_freq == 0
                 hasattr(pl_module, "log_images") and
                 callable(pl_module.log_images) and
                 self.max_images > 0):
             logger = type(pl_module.logger)
 
-            is_train = pl_module.training
             if is_train:
                 pl_module.eval()
 
@@ -373,9 +374,9 @@ class FigLogger(Callback):
             if is_train:
                 pl_module.train()
 
-    def check_frequency(self, check_idx):
+    def check_frequency(self, check_idx,is_train=True):
         if ((check_idx % self.batch_freq) == 0 or (check_idx in self.log_steps)) and (
-                check_idx > 0 or self.log_first_step):
+                check_idx > 0 or self.log_first_step) or (not is_train) and (check_idx % (self.batch_freq//5)) == 0:
             try:
                 self.log_steps.pop(0)
             except IndexError as e:
