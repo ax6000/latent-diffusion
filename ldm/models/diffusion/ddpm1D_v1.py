@@ -368,7 +368,7 @@ class DDPM(pl.LightningModule):
     @torch.no_grad()
     def test_step(self, batch, batch_idx):
         x, c,xx,xc = self.get_input(batch, self.first_stage_key,return_original_cond=True,return_original_input=True)
-        print(x.shape,c.shape,xx.shape,xc.shape)
+        # print(x.shape,c.shape,xx.shape,xc.shape)
         _, loss_dict_no_ema = self(x, c)
         with self.ema_scope():
             _, loss_dict_ema = self(x, c)
@@ -726,12 +726,12 @@ class LatentDiffusion(DDPM):
                 pos_x, pos_y = self.compute_latent_shifts(batch)
                 c = {'pos_x': pos_x, 'pos_y': pos_y}
         out = [z, c]
-        print(z.shape,xc.shape)
+        # print(z.shape,xc.shape)
         if return_first_stage_outputs:
             xrec = self.decode_first_stage(z)
             out.extend([x, xrec])
-        if return_original_cond:
-            out.append(x)
+        # if return_original_cond:
+        #     out.append(x)
         if return_original_cond:
             out.append(xc)
         return out
