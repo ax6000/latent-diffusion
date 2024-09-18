@@ -1,5 +1,5 @@
 model:
-  base_learning_rate: 1.0e-5   # set to target_lr by starting main.py with '--scale_lr False'
+  base_learning_rate: 1.0e-6   # set to target_lr by starting main.py with '--scale_lr False'
   target: ldm.models.diffusion.ddpm1D_v1.LatentDiffusion
   params:
     linear_start: 0.0015
@@ -32,8 +32,8 @@ model:
       target: ldm.modules.diffusionmodules.openaimodel1D_v1.UNetModel
       params:
         image_size: 64
-        in_channels: 256
-        out_channels: 256
+        in_channels: 3
+        out_channels: 3
         model_channels: 256
         attention_resolutions:
         # note: this isn\t actually the resolution but
@@ -57,7 +57,7 @@ model:
     first_stage_config:
       target: ldm.models.autoencoder1D_v1.AutoencoderKL
       params:
-        embed_dim: 256
+        embed_dim: 3
         monitor: "val/rec_loss"
         ckpt_path: "models/first_stage_models/ppg2abp-kl-f4/abp.ckpt"
         image_key: gt_image
@@ -78,7 +78,7 @@ model:
     cond_stage_config: 
       target: ldm.models.autoencoder1D_v1.AutoencoderKL
       params:
-        embed_dim: 256
+        embed_dim: 3
         monitor: "val/rec_loss"
         ckpt_path: "models/first_stage_models/ppg2abp-kl-f4/ppg.ckpt"
         image_key: cond_image
@@ -103,6 +103,7 @@ data:
     train:
       target: ldm.data.ppg2abp.PPG2ABPDataset_v3_Train
       params:
+        # data_len: 100
         size: 256
     validation:
       target: ldm.data.ppg2abp.PPG2ABPDataset_v3_Val

@@ -318,10 +318,10 @@ class FigLogger(Callback):
     def log_local(self, save_dir, split, images,
                   global_step, current_epoch, batch_idx):
         root = os.path.join(save_dir, "images", split)
-        for k in images:
-            fig = self.make_figures(images[k])
+        for key in images:
+            fig = self.make_figures(images[key])
             filename = "{}_gs-{:06}_e-{:06}_b-{:06}.png".format(
-                k,
+                key,
                 global_step,
                 current_epoch,
                 batch_idx)
@@ -334,10 +334,14 @@ class FigLogger(Callback):
     def make_figures(self,images,nrow=4):
         # print("FigLogger.make_figures",images.shape)
         ncol = len(images)//nrow+1 if len(images)%nrow else len(images)//nrow
-        # print(ncol,nrow,images[0].shape,len(images))
         fig,axes = plt.subplots(nrow,ncol)
+        print(len(images), ncol,nrow)
         for i in range(len(images)):
-            axes[i%4][i//4].plot(images[i].squeeze())
+            if images[i].shape[-1] == 2:
+                axes[i%4][i//4].plot(images[i][0,:,0])
+                axes[i%4][i//4].plot(images[i][0,:,1])
+            else:    
+                axes[i%4][i//4].plot(images[i].squeeze())
         # fig.tight_layout()
         # fig.show()
         return fig
