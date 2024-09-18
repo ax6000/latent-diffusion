@@ -85,6 +85,8 @@ class DDPM(pl.LightningModule):
         self.channels = channels
         self.use_positional_encodings = use_positional_encodings
         self.model = DiffusionWrapper(unet_config, conditioning_key)
+        self.input_shape = (unet_config["params"]["in_channels"],unet_config["params"]["image_size"])
+        print("DDPM init: input_shape",self.input_shape)
         count_params(self.model, verbose=True)
         self.use_ema = use_ema
         if self.use_ema:
@@ -734,6 +736,10 @@ class LatentDiffusion(DDPM):
         #     out.append(x)
         if return_original_cond:
             out.append(xc)
+        print("get_input len:",len(out),"first if:",self.model.conditioning_key is not None,"x shape:",x.shape,"z shape:",z.shape,
+              isinstance(encoder_posterior, (DiagonalGaussianDistribution,DiagonalGaussianDistribution1D)),
+              encoder_posterior.mean.shape,encoder_posterior.logvar.shape
+              )
         return out
 
     @torch.no_grad()
@@ -1268,7 +1274,9 @@ class LatentDiffusion(DDPM):
 
         if ddim:
             ddim_sampler = DDIMSampler(self)
-            shape = (self.channels, self.image_size//4)
+            # print("cond_shape:",cond.shape)
+            shape = self.input_shape
+            # shape = (self.channels, self.image_size//4)
             samples, intermediates =ddim_sampler.sample(ddim_steps,batch_size,
                                                         shape,cond,verbose=False,**kwargs)
 
@@ -1297,8 +1305,8 @@ class LatentDiffusion(DDPM):
         log["inputs"] = x
         log["reconstruction"] = xrec
         if self.model.conditioning_key is not None:
-            if hasattr(self.cond_stage_model, "encode"):
-                xc = self.cond_stage_model.encode(c)
+            if hasattr(self.cond_stage_model, "decode"):
+                xc = self.cond_stage_model.decode(c)
                 log["conditioning"] = xc
             elif self.cond_stage_key in ["caption"]:
                 xc = log_txt_as_img((x.shape[2], x.shape[3]), batch["caption"])
@@ -1378,7 +1386,7 @@ class LatentDiffusion(DDPM):
         if plot_progressive_rows:
             with self.ema_scope("Plotting Progressives"):
                 img, progressives = self.progressive_denoising(c,
-                                                               shape=(self.channels, self.image_size),
+                                                               shape=self.input_shape,
                                                                batch_size=N)
             prog_row = self._get_denoise_row_from_list(progressives, desc="Progressive Generation")
             log["progressive_row"] = prog_row
