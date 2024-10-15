@@ -148,8 +148,8 @@ def run(model, logdir, batch_size=50, vanilla=False, custom_steps=None, eta=None
         n_samples = len(dataset)
         train_loader = torch.utils.data.DataLoader(dataset,batch_size=batch_size,shuffle=False)
         # batch_size = 128
-        print(f"Running unconditional sampling for {n_samples} samples")
-        for i in trange(n_samples // batch_size, desc="Sampling Batches (unconditional)"):
+        print(f"Running conditional sampling for {n_samples} samples")
+        for i in trange(n_samples // batch_size, desc="Sampling Batches (conditional)"):
             data = next(iter(train_loader))
             conditioning = data['cond_image']
             # print(conditioning.shape)

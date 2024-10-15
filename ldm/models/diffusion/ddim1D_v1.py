@@ -69,6 +69,7 @@ class DDIMSampler(object):
                noise_dropout=0.,
                score_corrector=None,
                corrector_kwargs=None,
+               concat_mode = False,
                verbose=True,
                x_T=None,
                log_every_t=100,
@@ -89,8 +90,12 @@ class DDIMSampler(object):
         self.make_schedule(ddim_num_steps=S, ddim_eta=eta, verbose=verbose)
         # sampling
         C, H = shape
+        if concat_mode:
+            C = C //2
+        else:
+            C = 3
         size = (batch_size, C, H)
-        print(f'Data shape for DDIM sampling is {size}, eta {eta}')
+        print(f'Data shape for DDIM sampling is {size}, eta {eta}',"conditioning shape:",conditioning.shape,"x_T:",x_T,"concat:",concat_mode)
 
         samples, intermediates = self.ddim_sampling(conditioning, size,
                                                     callback=callback,

@@ -2,6 +2,7 @@ model:
   base_learning_rate: 4.5e-6
   target: ldm.models.autoencoder1D_v1.AutoencoderKL
   params:
+    monitor: "val/rec_loss"
     embed_dim: 3
     image_key: cond_image
     ddconfig:
@@ -20,7 +21,7 @@ model:
       target: ldm.modules.losses.contperceptual.LPIPSWithDiscriminator_2
       params:
         disc_start: 20001
-        kl_weight: 0.1
+        kl_weight: 0.25
         disc_weight: 0.5
 
 

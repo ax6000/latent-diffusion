@@ -453,7 +453,7 @@ class LatentDiffusion(DDPM):
                  num_timesteps_cond=None,
                  cond_stage_key="image",
                  cond_stage_trainable=False,
-                 concat_mode=True,
+                 concat_mode=False,
                  cond_stage_forward=None,
                  conditioning_key=None,
                  scale_factor=1.0,
@@ -736,10 +736,10 @@ class LatentDiffusion(DDPM):
         #     out.append(x)
         if return_original_cond:
             out.append(xc)
-        print("get_input len:",len(out),"first if:",self.model.conditioning_key is not None,"x shape:",x.shape,"z shape:",z.shape,
-              isinstance(encoder_posterior, (DiagonalGaussianDistribution,DiagonalGaussianDistribution1D)),
-              encoder_posterior.mean.shape,encoder_posterior.logvar.shape
-              )
+        # print("get_input len:",len(out),"first if:",self.model.conditioning_key is not None,"x shape:",x.shape,"z shape:",z.shape,
+            #   isinstance(encoder_posterior, (DiagonalGaussianDistribution,DiagonalGaussianDistribution1D)),
+            #   encoder_posterior.mean.shape,encoder_posterior.logvar.shape
+            #   )
         return out
 
     @torch.no_grad()
@@ -1278,7 +1278,7 @@ class LatentDiffusion(DDPM):
             shape = self.input_shape
             # shape = (self.channels, self.image_size//4)
             samples, intermediates =ddim_sampler.sample(ddim_steps,batch_size,
-                                                        shape,cond,verbose=False,**kwargs)
+                                                        shape,cond,verbose=False,concat_mode=self.concat_mode,**kwargs)
 
         else:
             samples, intermediates = self.sample(cond=cond, batch_size=batch_size,

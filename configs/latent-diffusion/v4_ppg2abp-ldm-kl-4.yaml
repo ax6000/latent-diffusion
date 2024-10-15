@@ -1,0 +1,134 @@
+model:
+  base_learning_rate: 3.0e-6   # set to target_lr by starting main.py with '--scale_lr False'
+  target: ldm.models.diffusion.ddpm1D_v1.LatentDiffusion
+  params:
+    linear_start: 0.0015
+    linear_end: 0.0155
+    num_timesteps_cond: 1
+    log_every_t: 200
+    timesteps: 1000
+    # loss_type: l1
+    first_stage_key: gt_image
+    cond_stage_key: cond_image
+    image_size: 64
+    channels: 3
+    conditioning_key: crossattn
+    # conditioning_key: concat
+    cond_stage_trainable: False
+    concat_mode: False
+    monitor: 'val/loss_simple_ema'
+    scale_factor: 0.18215
+    scheduler_config: # 10000 warmup steps
+      target: ldm.lr_scheduler.LambdaLinearScheduler
+      params:
+        warm_up_steps: [10000]
+        cycle_lengths: [10000000000000]
+        f_start: [1.e-6]
+        f_max: [1.]
+        f_min: [ 1.]
+
+    unet_config:
+      target: ldm.modules.diffusionmodules.openaimodel1D_v1.UNetModel
+      params:
+        image_size: 64
+        in_channels: 3
+        out_channels: 3
+        model_channels: 256
+        attention_resolutions:
+        # note: this isn\t actually the resolution but
+        # the downsampling factor, i.e. this corresnponds to
+        # attention on spatial resolution 8,16,32, as the
+        # spatial reolution of the latents is 64 for f4
+        - 8
+        - 4
+        - 2
+        num_res_blocks: 2
+        channel_mult:
+        - 1
+        - 2
+        - 3
+        - 4
+        num_head_channels: 32
+        num_heads: 4
+        use_scale_shift_norm: True
+        resblock_updown: True
+    first_stage_config:
+      target: ldm.models.autoencoder1D_v1.AutoencoderKL
+      params:
+        monitor: "val/rec_loss"
+        embed_dim: 3
+        ckpt_path: "models/first_stage_models/v4_ppg2abp-kl-f4/abp.ckpt"
+        image_key: gt_image
+        ddconfig:
+          double_z: True
+          z_channels: 3
+          resolution: 256
+          in_channels: 1
+          out_ch: 1
+          ch: 128
+          ch_mult: [ 1,2,4]  # num_down = len(ch_mult)-1
+          num_res_blocks: 2
+          attn_resolutions: [16]
+          dropout: 0.0
+
+        lossconfig:
+          target: torch.nn.Identity
+
+    cond_stage_config: 
+      target: ldm.models.autoencoder1D_v1.AutoencoderKL
+      params:
+        monitor: "val/rec_loss"
+        embed_dim: 3
+        ckpt_path: "models/first_stage_models/v4_ppg2abp-kl-f4/ppg.ckpt"
+        image_key: cond_image
+        ddconfig:
+          double_z: True
+          z_channels: 3
+          resolution: 256
+          in_channels: 1
+          out_ch: 1
+          ch: 128
+          ch_mult: [ 1,2,4]  # num_down = len(ch_mult)-1
+          num_res_blocks: 2
+          attn_resolutions: [16]
+          dropout: 0.0
+        lossconfig:
+          target: torch.nn.Identity
+data:
+  target: main.DataModuleFromConfig
+  params:
+    batch_size: 16
+    num_workers: 8
+    train:
+      target: ldm.data.ppg2abp.PPG2ABPDataset_v3_Train
+      params:
+        # data_len: 100
+        size: 256
+    validation:
+      target: ldm.data.ppg2abp.PPG2ABPDataset_v3_Val
+      params:
+        # data_len: 100
+        size: 256
+    test:
+      target: ldm.data.ppg2abp.PPG2ABPDataset_v3_Test
+      params:
+        size: 256
+    # predict:
+    #   target: ldm.data.ppg2abp.PPG2ABPDataset_v3_Predict
+    #   params:
+    #     size: 256
+
+
+lightning:
+  callbacks:
+    image_logger:
+      target: main.FigLogger
+      params:
+        batch_frequency: 10000
+        max_images: 8
+        increase_log_steps: False
+
+
+  trainer:
+    benchmark: True
+    gpus: 0,
