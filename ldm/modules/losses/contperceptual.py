@@ -52,7 +52,7 @@ class LPIPSWithDiscriminator(nn.Module):
             rec_loss = rec_loss + self.perceptual_weight * p_loss
 
         nll_loss = rec_loss / torch.exp(self.logvar) + self.logvar
-        # nll_loss = rec_loss / torch.exp(posteriors.logvar) + posteriors.logvar
+        # nll_loss = rec_loss / torch.exp(posteriors.logvar.mean()) + posteriors.logvar.mean()
         weighted_nll_loss = nll_loss
         if weights is not None:
             weighted_nll_loss = weights*nll_loss
@@ -158,15 +158,21 @@ class LPIPSWithDiscriminator_2(nn.Module):
         if self.perceptual_weight > 0:
             p_loss = self.perceptual_loss(inputs.contiguous(), reconstructions.contiguous())
             rec_loss = rec_loss + self.perceptual_weight * p_loss
-        # nll_loss = rec_loss / torch.exp(posteriors.logvar) + posteriors.logvar
-        nll_loss = rec_loss / torch.exp(self.logvar) + self.logvar
+        nll_loss = rec_loss / torch.exp(posteriors.logvar.mean()) + posteriors.logvar.mean()
+        # print("nl_loss:",nll_loss.detach().mean().cpu().float(),
+        #       "exp:", torch.exp(posteriors.logvar.mean()).detach().cpu().float(),
+        #       "rec_loss:",rec_loss.detach().mean().cpu().float(),
+        #       "logvar:",posteriors.logvar.mean().detach().cpu().float(),
+        #       "shape:",nll_loss.shape,"sum:",torch.sum(nll_loss).cpu().float())
+        # nll_loss = rec_loss / torch.exp(self.logvar) + self.logvar
         weighted_nll_loss = nll_loss
         if weights is not None:
             weighted_nll_loss = weights*nll_loss
         weighted_nll_loss = torch.sum(weighted_nll_loss) / weighted_nll_loss.shape[0]
-        nll_loss = torch.sum(nll_loss) / nll_loss.shape[0]
+        nll_loss = torch.mean(nll_loss)
         kl_loss = posteriors.kl()
-        kl_loss = torch.sum(kl_loss) / kl_loss.shape[0]
+        print("kl_loss",kl_loss.mean().detach().cpu().float(),torch.mean(kl_loss).detach().cpu().float(),"shape:",kl_loss.shape)
+        kl_loss = torch.mean(kl_loss)
 
         # now the GAN part
         if optimizer_idx == 0:
@@ -192,9 +198,10 @@ class LPIPSWithDiscriminator_2(nn.Module):
             loss = weighted_nll_loss + self.kl_weight * kl_loss + d_weight * disc_factor * g_loss
 
             log = {"{}/total_loss".format(split): loss.clone().detach().mean(), 
-                    # "{}/logvar".format(split): posteriors.logvar.detach(),   
-                "{}/logvar".format(split): self.logvar.detach(),
-                   "{}/kl_loss".format(split): kl_loss.detach().mean(), "{}/nll_loss".format(split): nll_loss.detach().mean(),
+                    "{}/logvar".format(split): posteriors.logvar.detach().mean(),   
+                # "{}/logvar".format(split): self.logvar.detach(),
+                   "{}/kl_loss".format(split): kl_loss.detach(),
+                   "{}/nll_loss".format(split): nll_loss.detach(),
                    "{}/rec_loss".format(split): rec_loss.detach().mean(),
                    "{}/d_weight".format(split): d_weight.detach(),
                    "{}/disc_factor".format(split): torch.tensor(disc_factor),

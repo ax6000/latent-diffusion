@@ -447,7 +447,11 @@ class NpyLogger(Callback):
         # print(ncol,nrow,images[0].shape,len(images))
         fig,axes = plt.subplots(nrow,ncol)
         for i in range(len(images)):
-            axes[i%4][i//4].plot(images[i].squeeze())
+            if images[i].shape[-1]==2:
+                axes[i%4][i//4].plot(images[i][0,:,0])
+                axes[i%4][i//4].plot(images[i][0,:,1])
+            else:
+                axes[i%4][i//4].plot(images[i].squeeze())
         # fig.tight_layout()
         # fig.show()
         return fig

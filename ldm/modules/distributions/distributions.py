@@ -68,7 +68,7 @@ class DiagonalGaussianDistribution1D(object):
         self.mean, self.logvar = torch.chunk(parameters, 2, dim=1)
         # print("Distribution1D.parameters:",self.parameters.shape,self.mean.shape,self.logvar.shape)
         # print("Distribution1D.parameters:",self.logvar.shape,self.logvar.mean())
-        self.logvar = torch.clamp(self.logvar, -30.0, 20.0)
+        self.logvar = torch.clamp(self.logvar, 1e-5, 20.0)
         self.deterministic = deterministic
         self.std = torch.exp(0.5 * self.logvar)
         self.var = torch.exp(self.logvar)
