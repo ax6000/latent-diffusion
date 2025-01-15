@@ -33,7 +33,7 @@ def make_dataset(dir):
     return images
 
 class PPG2ABPDataset_v3_base(Dataset):
-    def __init__(self,data_flist,data_root = r"..\..\data\processed\BP_npy\0625_256_2_clean\p00",
+    def __init__(self,data_flist,data_root = None,
                  data_len=1000, size=224, loader=None):
         self.data_root = data_root
         self.data_flist = data_flist
@@ -62,8 +62,8 @@ class PPG2ABPDataset_v3_base(Dataset):
     
     def __getitem__(self, index):
         ret = {}
-        ret['gt_image'] = self.data[index,:,0].reshape(1,-1).astype(np.float32)
-        ret['cond_image'] = self.data[index,:,1].reshape(1,-1).astype(np.float32)
+        ret['gt_image'] = self.data[index,:,0][np.newaxis, :].astype(np.float32)
+        ret['cond_image'] = self.data[index,:,1][np.newaxis, :].astype(np.float32)
         ret['path'] = str(index)
         return ret
 
@@ -71,17 +71,17 @@ class PPG2ABPDataset_v3_base(Dataset):
         return self.data.shape[0]
     
 class PPG2ABPDataset_v3_Train(PPG2ABPDataset_v3_base):
-    def __init__(self, data_len=-1, size=224, loader=None):
-        super().__init__(data_len=data_len,data_flist = r"..\..\data\processed\list\train_BP2.txt")
+    def __init__(self, data_len=-1, size=224, loader=None, data_root=r"..\..\data\processed\BP_npy\1127_256_balanced\p00"):
+        super().__init__(data_len=data_len,data_flist = r"..\..\data\processed\list\train_BP2.txt",data_root=data_root)
 
 class PPG2ABPDataset_v3_Val(PPG2ABPDataset_v3_base):
-    def __init__(self, data_len=1000, size=224, loader=None):
-        super().__init__(data_len=data_len,data_flist = r"..\..\data\processed\list\val_BP2.txt")
+    def __init__(self, data_len=1000, size=224, loader=None, data_root=r"..\..\data\processed\BP_npy\1127_256_balanced\p00"):
+        super().__init__(data_len=data_len,data_flist = r"..\..\data\processed\list\val_BP2.txt",data_root=data_root)
 
 class PPG2ABPDataset_v3_Test(PPG2ABPDataset_v3_base):
-    def __init__(self, data_len=5000, size=224, loader=None):
-        super().__init__(data_len=data_len,data_flist = r"..\..\data\processed\list\test_BP2.txt")         
+    def __init__(self, data_len=5000, size=224, loader=None, data_root=r"..\..\data\processed\BP_npy\1127_256_balanced\p00"):
+        super().__init__(data_len=data_len,data_flist = r"..\..\data\processed\list\test_BP2.txt",data_root=data_root)         
     
 class PPG2ABPDataset_v3_Predict(PPG2ABPDataset_v3_base):
-    def __init__(self, data_len=-1,size=224, loader=None):
-        super().__init__(data_flist = r"..\..\data\processed\list\predict_BP2.txt")
+    def __init__(self, data_len=-1,size=224, loader=None, data_root=r"..\..\data\processed\BP_npy\1127_256_balanced\p00"):
+        super().__init__(data_flist = r"..\..\data\processed\list\predict_BP2.txt",data_root=data_root)

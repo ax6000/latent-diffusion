@@ -93,7 +93,7 @@ class DDIMSampler(object):
         if concat_mode:
             C = C //2
         else:
-            C = 3
+            C = C
         size = (batch_size, C, H)
         print(f'Data shape for DDIM sampling is {size}, eta {eta}',"conditioning shape:",conditioning.shape,"x_T:",x_T,"concat:",concat_mode)
 
