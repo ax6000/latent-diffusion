@@ -1,0 +1,10 @@
+python sample_diffusion1D_v1.py -r C:\minowa\BloodPressureEstimation\repos\latent-diffusion\logs\2024-11-27T14-34-32_v4_ppg2abp-ldm-kl-4-concat-cv\checkpoints\last.ckpt --batch_size 128 -c 100 -e 1.0
+python sample_diffusion1D_v1.py -r C:\minowa\BloodPressureEstimation\repos\latent-diffusion\logs\2024-11-27T17-50-06_v4_ppg2abp-ldm-kl-4-concat-cv\checkpoints\last.ckpt --batch_size 128 -c 100 -e 1.0
+python sample_diffusion1D_v1.py -r C:\minowa\BloodPressureEstimation\repos\latent-diffusion\logs\2024-11-27T21-04-50_v4_ppg2abp-ldm-kl-4-concat-cv\checkpoints\last.ckpt --batch_size 128 -c 100 -e 1.0
+python sample_diffusion1D_v1.py -r C:\minowa\BloodPressureEstimation\repos\latent-diffusion\logs\2024-11-28T00-18-23_v4_ppg2abp-ldm-kl-4-concat-cv\checkpoints\last.ckpt --batch_size 128 -c 100 -e 1.0
+python sample_diffusion1D_v1.py -r C:\minowa\BloodPressureEstimation\repos\latent-diffusion\logs\2024-11-28T03-31-30_v4_ppg2abp-ldm-kl-4-concat-cv\checkpoints\last.ckpt --batch_size 128 -c 100 -e 1.0
+python sample_diffusion1D_v1.py -r C:\minowa\BloodPressureEstimation\repos\latent-diffusion\logs\2024-11-28T06-45-02_v4_ppg2abp-ldm-kl-4-concat-cv\checkpoints\last.ckpt --batch_size 128 -c 100 -e 1.0
+python sample_diffusion1D_v1.py -r C:\minowa\BloodPressureEstimation\repos\latent-diffusion\logs\2024-11-28T09-58-42_v4_ppg2abp-ldm-kl-4-concat-cv\checkpoints\last.ckpt --batch_size 128 -c 100 -e 1.0
+python sample_diffusion1D_v1.py -r C:\minowa\BloodPressureEstimation\repos\latent-diffusion\logs\2024-11-28T13-12-21_v4_ppg2abp-ldm-kl-4-concat-cv\checkpoints\last.ckpt --batch_size 128 -c 100 -e 1.0
+python sample_diffusion1D_v1.py -r C:\minowa\BloodPressureEstimation\repos\latent-diffusion\logs\2024-11-28T16-26-09_v4_ppg2abp-ldm-kl-4-concat-cv\checkpoints\last.ckpt --batch_size 128 -c 100 -e 1.0
+python sample_diffusion1D_v1.py -r C:\minowa\BloodPressureEstimation\repos\latent-diffusion\logs\2024-11-28T19-42-18_v4_ppg2abp-ldm-kl-4-concat-cv\checkpoints\last.ckpt --batch_size 128 -c 100 -e 1.0

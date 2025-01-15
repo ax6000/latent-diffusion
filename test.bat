@@ -1,2 +1,1 @@
-py -3.8 sample_diffusion1D_v1.py -r F:\minowa\BloodPressureEstimation\repos\latent-diffusion\models\ldm\2024-12-23T19-59-41_v3_ppg2abp-kl-f4_1d\epoch=000005.ckpt --batch_size 128 -c 100 -e 1.0
-@REM python sample_diffusion1D_v1.py -r .\models\first_stage_models\v4_ppg2abp-kl-f4\abp.ckpt --batch_size 128 -c 100 -e 1.0
+python sample_diffusion1D_v1.py -r C:\minowa\BloodPressureEstimation\repos\latent-diffusion\models\ldm\v3_ppg2abp-kl-f4\epoch=000111.ckpt --batch_size 128 -c 100 -e 1.0

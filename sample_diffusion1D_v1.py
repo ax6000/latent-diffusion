@@ -93,7 +93,8 @@ def make_convolutional_sample(model, batch_size, vanilla=False, custom_steps=Non
         # c = torch.cat(c, 1)
         print(c.shape)
         shape = torch.tensor(c.shape)
-        if not model.concat_mode:
+        print("concat mode is ", model.concat_mode)
+        if not model.concat_mode and shape[-1]==256:
             shape[-1] = shape[-1]//4
         if vanilla:
             sample, progrow = convsample(model, shape,

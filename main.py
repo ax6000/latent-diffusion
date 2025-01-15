@@ -402,7 +402,7 @@ class FigLogger(Callback):
 
 class NpyLogger(Callback):
     def __init__(self, batch_frequency, max_images, clamp=False, increase_log_steps=True,
-                 rescale=True, disabled=False, log_on_batch_idx=False, log_first_step=False,
+                 rescale=True, disabled=False, log_on_batch_idx=False, log_first_step=True,
                  log_images_kwargs=None):
         super().__init__()
         self.rescale = rescale
@@ -947,7 +947,8 @@ if __name__ == "__main__":
                 raise
         if not opt.no_test and not trainer.interrupted:
             print("####xddss")
-            trainer.test(model, dataloaders=data,ckpt_path=ckpt)
+            # trainer.test(model, dataloaders=data,ckpt_path=ckpt)
+            trainer.test(model, dataloaders=data)
     except Exception:
         if opt.debug and trainer.global_rank == 0:
             try:
