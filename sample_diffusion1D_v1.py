@@ -92,7 +92,10 @@ def make_convolutional_sample(model, batch_size, vanilla=False, custom_steps=Non
         c = model.get_learned_conditioning(conditioning.to("cuda"))
         # c = torch.cat(c, 1)
         print(c.shape)
-        shape = c.shape
+        shape = torch.tensor(c.shape)
+        print("concat mode is ", model.concat_mode)
+        if not model.concat_mode and shape[-1]==256:
+            shape[-1] = shape[-1]//4
         if vanilla:
             sample, progrow = convsample(model, shape,
                                          make_prog_row=True)
@@ -147,10 +150,11 @@ def run(model, logdir, batch_size=50, vanilla=False, custom_steps=None, eta=None
         dataset = ppg2abp.PPG2ABPDataset_v3_Test()
         n_samples = len(dataset)
         train_loader = torch.utils.data.DataLoader(dataset,batch_size=batch_size,shuffle=False)
+        iter_loader = iter(train_loader)
         # batch_size = 128
         print(f"Running conditional sampling for {n_samples} samples")
         for i in trange(n_samples // batch_size, desc="Sampling Batches (conditional)"):
-            data = next(iter(train_loader))
+            data = next(iter_loader)
             conditioning = data['cond_image']
             # print(conditioning.shape)
             # import matplotlib.pyplot as plt
@@ -296,19 +300,25 @@ if __name__ == "__main__":
     if os.path.isfile(opt.resume):
         # paths = opt.resume.split("/")
         try:
-            logdir = '\\'.join(opt.resume.split('\\')[:-1])
+            logdir = '\\'.join(opt.resume.split('\\')[:-2])+"\\configs"
             # idx = len(paths)-paths[::-1].index("logs")+1
+            yaml_files = glob.glob(os.path.join(logdir, "*.yaml"))
+    
+            # 結果が空の場合に例外を発生
+            if not yaml_files:
+                raise ValueError(f"No .yaml files found in directory: {logdir}")
             print(f'Logdir is {logdir}')
         except ValueError:
             paths = opt.resume.split("\\")
-            idx = -2  # take a guess: path/to/logdir/checkpoints/model.ckpt
+            idx = -1  # take a guess: path/to/logdir/checkpoints/model.ckpt
             logdir = "\\".join(paths[:idx])
+            # print("logdir is", logdir)
         ckpt = opt.resume
     else:
         assert os.path.isdir(opt.resume), f"{opt.resume} is not a directory"
         logdir = opt.resume.rstrip("\\")
         ckpt = os.path.join(logdir, "model.ckpt")
-    base_configs = sorted(glob.glob(os.path.join(logdir, "config.yaml")))
+    base_configs = sorted(glob.glob(os.path.join(logdir, "*.yaml")))
     print("config",base_configs)
     opt.base = base_configs
 

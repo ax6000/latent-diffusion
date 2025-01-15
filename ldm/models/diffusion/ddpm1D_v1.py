@@ -369,7 +369,7 @@ class DDPM(pl.LightningModule):
     
     @torch.no_grad()
     def test_step(self, batch, batch_idx):
-        x, c,xx,xc = self.get_input(batch, self.first_stage_key,return_original_cond=True,return_original_input=True)
+        x, c,xx = self.get_input(batch, self.first_stage_key,return_original_cond=True)
         # print(x.shape,c.shape,xx.shape,xc.shape)
         _, loss_dict_no_ema = self(x, c)
         with self.ema_scope():
@@ -381,7 +381,7 @@ class DDPM(pl.LightningModule):
         self.log_dict(loss_dict_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True)
         path = os.path.join("predictions",datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
         os.makedirs(path,exist_ok=True)
-        o = {'GT':xx.detach().cpu(),'Cond':xc.detach().cpu(),'Out':out.detach().cpu()}
+        o = {'GT':xx.detach().cpu(),'Cond':c.detach().cpu(),'Out':out.detach().cpu()}
         for k in o.keys():
             np.save(os.path.join(path,f"{k}-{o[k].shape[0]*1}.npy"),o[k])
         # return {'GT':x.detach().cpu(),'Cond':c.detach().cpu(),'Out':images.detach().cpu()}
@@ -685,7 +685,7 @@ class LatentDiffusion(DDPM):
 
     @torch.no_grad()
     def get_input(self, batch, k, return_first_stage_outputs=False, force_c_encode=False,
-                  cond_key=None, return_original_cond=False, bs=None,return_original_input=False):
+                  cond_key=None, return_original_cond=False, bs=None):
         x = super().get_input(batch, k)
         if bs is not None:
             x = x[:bs]
@@ -1149,6 +1149,7 @@ class LatentDiffusion(DDPM):
                               img_callback=None, mask=None, x0=None, temperature=1., noise_dropout=0.,
                               score_corrector=None, corrector_kwargs=None, batch_size=None, x_T=None, start_T=None,
                               log_every_t=None):
+        print("progressive_denoising shape:",shape)
         if not log_every_t:
             log_every_t = self.log_every_t
         timesteps = self.num_timesteps
@@ -1157,6 +1158,7 @@ class LatentDiffusion(DDPM):
             shape = [batch_size] + list(shape)
         else:
             b = batch_size = shape[0]
+        print("progressive_denoising shape 2:",shape)
         if x_T is None:
             img = torch.randn(shape, device=self.device)
         else:
@@ -1385,8 +1387,12 @@ class LatentDiffusion(DDPM):
 
         if plot_progressive_rows:
             with self.ema_scope("Plotting Progressives"):
+                if self.concat_mode:
+                    shape_tmp = (self.input_shape[0]//2,self.input_shape[1])
+                else:
+                    shape_tmp = (self.input_shape[0],self.input_shape[1])
                 img, progressives = self.progressive_denoising(c,
-                                                               shape=self.input_shape,
+                                                               shape=shape_tmp,
                                                                batch_size=N)
             prog_row = self._get_denoise_row_from_list(progressives, desc="Progressive Generation")
             log["progressive_row"] = prog_row
